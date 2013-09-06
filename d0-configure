@@ -1,0 +1,27 @@
+#!/bin/bash
+./configure \
+	--prefix=/Applications/drag0n/drag0n.app/Contents/System \
+	--enable-embed=static \
+	--enable-static=yes \
+	--with-config-file-path="" \
+	--with-config-file-scan-dir="" \
+	--enable-maintainer-zts \
+	--enable-pthreads \
+	--with-wxwidgets \
+	--enable-wxwidgets-monolithic \
+	--enable-mbstring \
+	--enable-ftp \
+	--enable-soap \
+	--enable-zip \
+	--enable-opcache \
+	--with-tidy \
+	--with-libedit \
+	--with-curl \
+	--with-mcrypt \
+	--with-gd \
+	--with-pear \
+	--with-libedit \
+	--with-curl \
+	--enable-intl \
+	--enable-soap \
+	--enable-libxml "$*"
