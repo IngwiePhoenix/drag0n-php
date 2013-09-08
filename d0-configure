@@ -7,9 +7,8 @@
 	--with-config-file-scan-dir="" \
 	--enable-maintainer-zts \
 	--enable-pthreads \
-	--with-wxwidgets \
-	--enable-wxwidgets-monolithic \
 	--enable-mbstring \
+	--enable-sockets \
 	--enable-ftp \
 	--enable-soap \
 	--enable-zip \
@@ -25,3 +24,7 @@
 	--enable-intl \
 	--enable-soap \
 	--enable-libxml "$*"
+	
+# Currently not working:
+#	--with-wxwidgets \
+#	--enable-wxwidgets-monolithic \
