@@ -9,7 +9,7 @@ EPREFIX=$PREFIX/usr
 	--sysconfdir=$PREFIX/etc \
 	--sharedstatedir=$EPREFIX/com \
 	--localstatedir=$PREFIX/var \
-	--libdir=$PREFIX/lib \
+	--libdir=$PREFIX/usr/local/lib \
 	--includedir=$EPREFIX/local/include \
 	--oldincludedir=$PREFIX/local/include \
 	--datarootdir=$EPREFIX/local/share \
@@ -36,12 +36,18 @@ EPREFIX=$PREFIX/usr
 	--enable-opcache \
 	--with-tidy \
 	--with-libedit \
-	--with-curl \
+	--with-curl=/usr/local \
 	--with-mcrypt \
 	--with-gd \
 	--with-pear \
 	--with-libedit \
-	--with-curl \
 	--enable-intl \
 	--enable-soap \
 	--enable-libxml "$*"
+exit 0
+	
+# not working
+	--with-gpg \
+	--with-gnupg=/usr/local/include/ \
+	--with-wxwidgets \
+	--with-wxwidgets-monolith \
