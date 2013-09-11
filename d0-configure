@@ -27,6 +27,7 @@ EPREFIX=$PREFIX/usr
 	--with-config-file-scan-dir="" \
 	--enable-maintainer-zts \
 	--enable-pthreads \
+	--with-ssh2 \
 	--enable-mbstring \
 	--enable-sockets \
 	--enable-ftp \
@@ -44,7 +45,3 @@ EPREFIX=$PREFIX/usr
 	--enable-intl \
 	--enable-soap \
 	--enable-libxml "$*"
-	
-# Currently not working:
-#	--with-wxwidgets \
-#	--enable-wxwidgets-monolithic \

@@ -14,6 +14,9 @@
  * 
 */
 
+if (!ini_get('short_open_tag'))
+	exit("Error: short_open_tag must be turned on in your php.ini\n");
+
 include("include/functions.php");
 include("include/function_generation.php");
 include("include/class_header_generation.php");
@@ -57,6 +60,9 @@ if(file_exists("./../../json/includes.json"))
 	
 	//for wxAbort()
 	$defIncludes["wx/debug.h"] = 1;
+	
+	// for wxGetNumberFromUser
+	$defIncludes["wx/numdlg.h"] = 1;
 	
 	//blacklist include files
 	unset($defIncludes["wx/msw/ole/activex.h"]);
@@ -180,12 +186,6 @@ if(file_exists("./../../json/typedef.json"))
 	$defTypedef = unserialize_json(file_get_contents("./../../json/typedef.json"));
 }
 
-//Store all classes that derive from wxEvtHandler
-$evnHandlers = derivationsOfClass('wxEvtHandler');
-
-//Store all classes that derive from wxObject
-$wxObject_derivations = derivationsOfClass('wxObject');
-
 //Prepair class groups to generate different source files correctly
 prepair_groups($defClassGroups, $defIni);
 
@@ -228,6 +228,12 @@ remove_methods_implementing_unhandled_arguments($defIni);
 
 //Remove obsolete .cpp and .h files
 remove_old_src_and_headers();
+
+//Store all classes that derive from wxEvtHandler
+$evnHandlers = derivationsOfClass('wxEvtHandler');
+
+//Store all classes that derive from wxObject
+$wxObject_derivations = derivationsOfClass('wxObject');
 
 print "\n";
 
@@ -466,11 +472,27 @@ ksort($defConsts);
 
 $classes .= "\t//Variables found on consts.json\n";
 $classes .= "\n";
+
+file_put_contents("discarded.log", "Constants\n\n", FILE_APPEND);
+
 foreach($defConsts as $constant_name => $constant_value)
 {
-	//Skip constants that dont include a numeric value or weren't defined manually
-	if(($constant_value{0} != "0" && $contant_value{1} != "x") && "".$constant_value."" != "1" && !is_enum($constant_value))
+	// Check if string
+	
+	if (preg_match('/^(wxString\()?(?P<str>".*")\)?$/', $constant_value, $match))
+	{
+		$classes .= "\tchar _wxchar_{$constant_name}[] = {$match['str']};\n";
+		$classes .= "\tREGISTER_STRING_CONSTANT(\"$constant_name\", _wxchar_$constant_name, CONST_CS | CONST_PERSISTENT);\n";
 		continue;
+	}
+	
+	// Skip empty constants and function calls
+	
+	if (!strlen($constant_value) || preg_match('/[a-z]\(/i', $constant_value))
+	{
+		file_put_contents("discarded.log", "$constant_name = \"$constant_value\"\n", FILE_APPEND);
+		continue;
+	}
 	
 	//Use the name as constant value for manually defined constants
 	if($constant_value == 1)

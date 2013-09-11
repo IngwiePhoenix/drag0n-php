@@ -56,6 +56,43 @@
 #include "others.h"
 
 /**
+ * Forwards some or all of the function parameters to PHP's sprintf.
+ * Returns a formatted string or NULL.
+ */
+zval * wxphp_sprintf(INTERNAL_FUNCTION_PARAMETERS, int offset = 0)
+{
+	int		argc = ZEND_NUM_ARGS();
+	zval	***argv;
+	zval	funcName, *string, *retVal = NULL;
+	
+	if (argc < 1) {
+		WRONG_PARAM_COUNT_WITH_RETVAL(NULL);
+	}
+	
+	argv = (zval ***) safe_emalloc(argc, sizeof(zval **), 0);
+	
+	if (zend_get_parameters_array_ex(argc, argv) == FAILURE) {
+		efree(argv);
+		WRONG_PARAM_COUNT_WITH_RETVAL(NULL);
+	}
+		
+	ZVAL_STRINGL(&funcName, "sprintf", sizeof("sprintf") - 1, 0);
+
+	if (call_user_function_ex(EG(function_table), NULL, &funcName, &string,
+		argc - offset, argv + offset, 0, NULL TSRMLS_CC) == SUCCESS)
+	{
+		if (Z_TYPE_P(string) == IS_STRING)
+			retVal = string;
+		else
+			zval_ptr_dtor(&string);
+	}
+	
+	efree(argv);
+	
+	return retVal;
+}
+
+/**
  * Predefined handcoded set of functions
  */
  
@@ -109,6 +146,151 @@ PHP_FUNCTION(php_wxC2D)
 	}
 	
 	zend_error(E_ERROR, "Ivalid count or type of parameters for wxC2D(), you should pass a constant object to transform to dynamic\n");
+}
+/* }}} */
+
+/* {{{ proto void wxLogError(string formatString, ...)
+   The function to use for error messages, i.e. the messages that must be shown to the user. The default processing is to pop up a message box to inform the user about it. */
+PHP_FUNCTION(php_wxLogError)
+{
+	zval *message;
+	
+	if (message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU))
+	{
+		wxLogError(Z_STRVAL_P(message));
+		zval_ptr_dtor(&message);
+	}
+}
+/* }}} */
+
+/* {{{ proto void wxLogFatalError(string formatString, ...)
+   Like wxLogError(), but also terminates the program with the exit code 3. */
+PHP_FUNCTION(php_wxLogFatalError)
+{
+	zval *message;
+	
+	if (message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU))
+	{
+		wxLogFatalError(Z_STRVAL_P(message));
+		zval_ptr_dtor(&message);
+	}
+}
+/* }}} */
+
+/* {{{ proto void wxLogGeneric(int level, string formatString, ...)
+   Logs a message with the given wxLogLevel. */
+PHP_FUNCTION(php_wxLogGeneric)
+{
+	char	parse[] = "l";
+	long 	logLevel;
+	zval	*message;
+	
+	if (ZEND_NUM_ARGS() < 2) {
+		WRONG_PARAM_COUNT;
+	}
+	
+	if (zend_parse_parameters(1 TSRMLS_CC, parse, &logLevel) == SUCCESS)
+	{
+		if (message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1))
+		{
+			wxLogGeneric(logLevel, Z_STRVAL_P(message));
+			zval_ptr_dtor(&message);
+		}
+	}
+}
+/* }}} */
+
+/* {{{ proto void wxLogMessage(string formatString, ...)
+   For all normal, informational messages. */
+PHP_FUNCTION(php_wxLogMessage)
+{
+	zval *message;
+	
+	if (message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU))
+	{
+		wxLogMessage(Z_STRVAL_P(message));
+		zval_ptr_dtor(&message);
+	}
+}
+/* }}} */
+
+/* {{{ proto void wxLogStatus([wxFrame frame,] string formatString, ...)
+   Messages logged by this function will appear in the statusbar of the frame or of the top level application window. */
+PHP_FUNCTION(php_wxLogStatus)
+{
+	char		parse[] = "O";
+	wxFrame 	*frame = NULL;
+	zval		*zFrame;
+	zval		*message;
+	
+	if (ZEND_NUM_ARGS() < 1) {
+		WRONG_PARAM_COUNT;
+	}
+	
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, 1 TSRMLS_CC,
+		parse, &zFrame, php_wxFrame_entry) == SUCCESS)
+	{
+		// Called with wxFrame as first parameter
+	
+		frame = (wxFrame*)
+			((zo_wxFrame*) zend_object_store_get_object(zFrame TSRMLS_CC))->native_object;
+
+		message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
+	}
+	else
+		message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+
+	if (message)
+	{
+		if (frame)
+			wxLogStatus(frame, Z_STRVAL_P(message));
+		else
+			wxLogStatus(Z_STRVAL_P(message));
+	
+		zval_ptr_dtor(&message);
+	}
+}
+/* }}} */
+
+/* {{{ proto void wxLogSysError(string formatString, ...)
+   Logs the specified message text as well as the last system error code (errno or GetLastError() depending on the platform) and the corresponding error message. */
+PHP_FUNCTION(php_wxLogSysError)
+{
+	zval *message;
+	
+	if (message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU))
+	{
+		wxLogSysError(Z_STRVAL_P(message));
+		zval_ptr_dtor(&message);
+	}
+}
+/* }}} */
+
+/* {{{ proto void wxLogVerbose(string formatString, ...)
+   For verbose output. Normally, it is suppressed, but might be activated if the user wishes to know more details about the program progress (another, but possibly confusing name for the same function could be wxLogInfo). */
+PHP_FUNCTION(php_wxLogVerbose)
+{
+	zval *message;
+	
+	if (message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU))
+	{
+		wxLogVerbose(Z_STRVAL_P(message));
+		zval_ptr_dtor(&message);
+	}
+}
+/* }}} */
+
+/* {{{ proto void wxLogWarning(string formatString, ...)
+   For warnings - they are also normally shown to the user, but don't interrupt the program work. */
+PHP_FUNCTION(php_wxLogWarning)
+{
+	zval *message;
+	
+	if (message = wxphp_sprintf(INTERNAL_FUNCTION_PARAM_PASSTHRU))
+	{
+		wxLogWarning(Z_STRVAL_P(message));
+		zval_ptr_dtor(&message);
+	}
 }
 /* }}} */
 
@@ -6928,12 +7110,12 @@ PHP_FUNCTION(php_wxGetFontFromUser)
 				php_printf("Executing ::wxGetFontFromUser((wxWindow*) object_pointer0_0, *(wxFont*) object_pointer0_1) to return new object\n\n");
 				#endif
 
-				wxFont value_to_return2;
-				value_to_return2 = wxGetFontFromUser((wxWindow*) object_pointer0_0, *(wxFont*) object_pointer0_1);
-				void* ptr = safe_emalloc(1, sizeof(wxFont_php), 0);
-				memcpy(ptr, &value_to_return2, sizeof(wxFont));
+				wxFont_php *value_to_return2;
+				value_to_return2 = new wxFont_php(wxGetFontFromUser((wxWindow*) object_pointer0_0, *(wxFont*) object_pointer0_1));
 				object_init_ex(return_value, php_wxFont_entry);
-				((zo_wxFont*) zend_object_store_get_object(return_value TSRMLS_CC))->native_object = (wxFont_php*) ptr;
+				zo_wxFont* zo2 = (zo_wxFont*) zend_object_store_get_object(return_value TSRMLS_CC);
+				zo2->native_object = value_to_return2;
+				zo2->is_user_initialized = 1;
 
 
 				return;
@@ -6945,12 +7127,12 @@ PHP_FUNCTION(php_wxGetFontFromUser)
 				php_printf("Executing ::wxGetFontFromUser((wxWindow*) object_pointer0_0, *(wxFont*) object_pointer0_1, wxString(caption0, wxConvUTF8)) to return new object\n\n");
 				#endif
 
-				wxFont value_to_return3;
-				value_to_return3 = wxGetFontFromUser((wxWindow*) object_pointer0_0, *(wxFont*) object_pointer0_1, wxString(caption0, wxConvUTF8));
-				void* ptr = safe_emalloc(1, sizeof(wxFont_php), 0);
-				memcpy(ptr, &value_to_return3, sizeof(wxFont));
+				wxFont_php *value_to_return3;
+				value_to_return3 = new wxFont_php(wxGetFontFromUser((wxWindow*) object_pointer0_0, *(wxFont*) object_pointer0_1, wxString(caption0, wxConvUTF8)));
 				object_init_ex(return_value, php_wxFont_entry);
-				((zo_wxFont*) zend_object_store_get_object(return_value TSRMLS_CC))->native_object = (wxFont_php*) ptr;
+				zo_wxFont* zo3 = (zo_wxFont*) zend_object_store_get_object(return_value TSRMLS_CC);
+				zo3->native_object = value_to_return3;
+				zo3->is_user_initialized = 1;
 
 
 				return;
@@ -8268,6 +8450,167 @@ PHP_FUNCTION(php_wxMessageBox)
 	if(!already_called)
 	{
 		zend_error(E_ERROR, "Wrong type or count of parameters passed to wxMessageBox()\n");
+	}
+}
+/* }}} */
+
+/* {{{ proto int wxGetNumberFromUser(string message, string prompt, string caption, int value, int min, int max, wxWindow &parent, wxPoint pos)
+   Shows a dialog asking the user for numeric input. */
+PHP_FUNCTION(php_wxGetNumberFromUser)
+{
+	#ifdef USE_WXPHP_DEBUG
+	php_printf("Invoking function wxGetNumberFromUser\n");
+	php_printf("===========================================\n");
+	#endif
+	
+	void* argument_native_object = NULL;
+	
+	//Variables used thru the code
+	int arguments_received = ZEND_NUM_ARGS();
+	zval* dummy;
+	bool already_called = false;
+	bool return_is_user_initialized = false;
+	
+	//Parameters for overload 0
+	char* message0;
+	long message_len0;
+	char* prompt0;
+	long prompt_len0;
+	char* caption0;
+	long caption_len0;
+	long value0;
+	long min0;
+	long max0;
+	zval* parent0 = 0;
+	wxWindow* object_pointer0_6 = 0;
+	zval* pos0 = 0;
+	wxPoint* object_pointer0_7 = 0;
+	bool overload0_called = false;
+		
+	//Overload 0
+	overload0:
+	if(!already_called && arguments_received >= 4  && arguments_received <= 8)
+	{
+		#ifdef USE_WXPHP_DEBUG
+		php_printf("Parameters received %d\n", arguments_received);
+		php_printf("Parsing parameters with 'sssl|llzO' (&message0, &message_len0, &prompt0, &prompt_len0, &caption0, &caption_len0, &value0, &min0, &max0, &parent0, &pos0, php_wxPoint_entry)\n");
+		#endif
+
+		char parse_parameters_string[] = "sssl|llzO";
+		if(zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, arguments_received TSRMLS_CC, parse_parameters_string, &message0, &message_len0, &prompt0, &prompt_len0, &caption0, &caption_len0, &value0, &min0, &max0, &parent0, &pos0, php_wxPoint_entry ) == SUCCESS)
+		{
+			if(arguments_received >= 7){
+				if(Z_TYPE_P(parent0) == IS_OBJECT)
+				{
+					wxphp_object_type argument_type = ((zo_wxWindow*) zend_object_store_get_object(parent0 TSRMLS_CC))->object_type;
+					argument_native_object = (void*) ((zo_wxWindow*) zend_object_store_get_object(parent0 TSRMLS_CC))->native_object;
+					object_pointer0_6 = (wxWindow*) argument_native_object;
+					if (!object_pointer0_6 || (argument_type != PHP_WXWINDOW_TYPE && argument_type != PHP_WXNONOWNEDWINDOW_TYPE && argument_type != PHP_WXTOPLEVELWINDOW_TYPE && argument_type != PHP_WXFRAME_TYPE && argument_type != PHP_WXSPLASHSCREEN_TYPE && argument_type != PHP_WXMDICHILDFRAME_TYPE && argument_type != PHP_WXMDIPARENTFRAME_TYPE && argument_type != PHP_WXMINIFRAME_TYPE && argument_type != PHP_WXPREVIEWFRAME_TYPE && argument_type != PHP_WXHTMLHELPDIALOG_TYPE && argument_type != PHP_WXHTMLHELPFRAME_TYPE && argument_type != PHP_WXDIALOG_TYPE && argument_type != PHP_WXTEXTENTRYDIALOG_TYPE && argument_type != PHP_WXPASSWORDENTRYDIALOG_TYPE && argument_type != PHP_WXMESSAGEDIALOG_TYPE && argument_type != PHP_WXFINDREPLACEDIALOG_TYPE && argument_type != PHP_WXDIRDIALOG_TYPE && argument_type != PHP_WXSYMBOLPICKERDIALOG_TYPE && argument_type != PHP_WXPROPERTYSHEETDIALOG_TYPE && argument_type != PHP_WXWIZARD_TYPE && argument_type != PHP_WXPROGRESSDIALOG_TYPE && argument_type != PHP_WXCOLOURDIALOG_TYPE && argument_type != PHP_WXFILEDIALOG_TYPE && argument_type != PHP_WXFONTDIALOG_TYPE && argument_type != PHP_WXPAGESETUPDIALOG_TYPE && argument_type != PHP_WXPRINTDIALOG_TYPE && argument_type != PHP_WXSINGLECHOICEDIALOG_TYPE && argument_type != PHP_WXGENERICPROGRESSDIALOG_TYPE && argument_type != PHP_WXPOPUPWINDOW_TYPE && argument_type != PHP_WXPOPUPTRANSIENTWINDOW_TYPE && argument_type != PHP_WXCONTROL_TYPE && argument_type != PHP_WXSTATUSBAR_TYPE && argument_type != PHP_WXANYBUTTON_TYPE && argument_type != PHP_WXBUTTON_TYPE && argument_type != PHP_WXBITMAPBUTTON_TYPE && argument_type != PHP_WXTOGGLEBUTTON_TYPE && argument_type != PHP_WXBITMAPTOGGLEBUTTON_TYPE && argument_type != PHP_WXTREECTRL_TYPE && argument_type != PHP_WXCONTROLWITHITEMS_TYPE && argument_type != PHP_WXLISTBOX_TYPE && argument_type != PHP_WXCHECKLISTBOX_TYPE && argument_type != PHP_WXREARRANGELIST_TYPE && argument_type != PHP_WXCHOICE_TYPE && argument_type != PHP_WXBOOKCTRLBASE_TYPE && argument_type != PHP_WXAUINOTEBOOK_TYPE && argument_type != PHP_WXLISTBOOK_TYPE && argument_type != PHP_WXCHOICEBOOK_TYPE && argument_type != PHP_WXNOTEBOOK_TYPE && argument_type != PHP_WXTREEBOOK_TYPE && argument_type != PHP_WXTOOLBOOK_TYPE && argument_type != PHP_WXANIMATIONCTRL_TYPE && argument_type != PHP_WXSTYLEDTEXTCTRL_TYPE && argument_type != PHP_WXSCROLLBAR_TYPE && argument_type != PHP_WXSTATICTEXT_TYPE && argument_type != PHP_WXSTATICLINE_TYPE && argument_type != PHP_WXSTATICBOX_TYPE && argument_type != PHP_WXSTATICBITMAP_TYPE && argument_type != PHP_WXCHECKBOX_TYPE && argument_type != PHP_WXTEXTCTRL_TYPE && argument_type != PHP_WXSEARCHCTRL_TYPE && argument_type != PHP_WXCOMBOBOX_TYPE && argument_type != PHP_WXBITMAPCOMBOBOX_TYPE && argument_type != PHP_WXAUITOOLBAR_TYPE && argument_type != PHP_WXLISTCTRL_TYPE && argument_type != PHP_WXLISTVIEW_TYPE && argument_type != PHP_WXRADIOBOX_TYPE && argument_type != PHP_WXRADIOBUTTON_TYPE && argument_type != PHP_WXSLIDER_TYPE && argument_type != PHP_WXSPINCTRL_TYPE && argument_type != PHP_WXSPINBUTTON_TYPE && argument_type != PHP_WXGAUGE_TYPE && argument_type != PHP_WXHYPERLINKCTRL_TYPE && argument_type != PHP_WXSPINCTRLDOUBLE_TYPE && argument_type != PHP_WXGENERICDIRCTRL_TYPE && argument_type != PHP_WXCALENDARCTRL_TYPE && argument_type != PHP_WXPICKERBASE_TYPE && argument_type != PHP_WXCOLOURPICKERCTRL_TYPE && argument_type != PHP_WXFONTPICKERCTRL_TYPE && argument_type != PHP_WXFILEPICKERCTRL_TYPE && argument_type != PHP_WXDIRPICKERCTRL_TYPE && argument_type != PHP_WXTIMEPICKERCTRL_TYPE && argument_type != PHP_WXTOOLBAR_TYPE && argument_type != PHP_WXDATEPICKERCTRL_TYPE && argument_type != PHP_WXCOLLAPSIBLEPANE_TYPE && argument_type != PHP_WXCOMBOCTRL_TYPE && argument_type != PHP_WXDATAVIEWCTRL_TYPE && argument_type != PHP_WXDATAVIEWLISTCTRL_TYPE && argument_type != PHP_WXDATAVIEWTREECTRL_TYPE && argument_type != PHP_WXHEADERCTRL_TYPE && argument_type != PHP_WXHEADERCTRLSIMPLE_TYPE && argument_type != PHP_WXFILECTRL_TYPE && argument_type != PHP_WXINFOBAR_TYPE && argument_type != PHP_WXRIBBONCONTROL_TYPE && argument_type != PHP_WXRIBBONBAR_TYPE && argument_type != PHP_WXRIBBONBUTTONBAR_TYPE && argument_type != PHP_WXRIBBONGALLERY_TYPE && argument_type != PHP_WXRIBBONPAGE_TYPE && argument_type != PHP_WXRIBBONPANEL_TYPE && argument_type != PHP_WXRIBBONTOOLBAR_TYPE && argument_type != PHP_WXWEBVIEW_TYPE && argument_type != PHP_WXSPLITTERWINDOW_TYPE && argument_type != PHP_WXPANEL_TYPE && argument_type != PHP_WXSCROLLEDWINDOW_TYPE && argument_type != PHP_WXHTMLWINDOW_TYPE && argument_type != PHP_WXGRID_TYPE && argument_type != PHP_WXPREVIEWCANVAS_TYPE && argument_type != PHP_WXWIZARDPAGE_TYPE && argument_type != PHP_WXWIZARDPAGESIMPLE_TYPE && argument_type != PHP_WXEDITABLELISTBOX_TYPE && argument_type != PHP_WXHSCROLLEDWINDOW_TYPE && argument_type != PHP_WXPREVIEWCONTROLBAR_TYPE && argument_type != PHP_WXMENUBAR_TYPE && argument_type != PHP_WXBANNERWINDOW_TYPE && argument_type != PHP_WXMDICLIENTWINDOW_TYPE && argument_type != PHP_WXTREELISTCTRL_TYPE && argument_type != PHP_WXSASHWINDOW_TYPE && argument_type != PHP_WXSASHLAYOUTWINDOW_TYPE && argument_type != PHP_WXHTMLHELPWINDOW_TYPE))
+					{
+						zend_error(E_ERROR, "Parameter 'parent' could not be retreived correctly.");
+					}
+				}
+				else if(Z_TYPE_P(parent0) != IS_NULL)
+				{
+					zend_error(E_ERROR, "Parameter 'parent' not null, could not be retreived correctly.");
+				}
+			}
+
+			if(arguments_received >= 8){
+				if(Z_TYPE_P(pos0) == IS_OBJECT)
+				{
+					wxphp_object_type argument_type = ((zo_wxPoint*) zend_object_store_get_object(pos0 TSRMLS_CC))->object_type;
+					argument_native_object = (void*) ((zo_wxPoint*) zend_object_store_get_object(pos0 TSRMLS_CC))->native_object;
+					object_pointer0_7 = (wxPoint*) argument_native_object;
+					if (!object_pointer0_7 )
+					{
+						zend_error(E_ERROR, "Parameter 'pos' could not be retreived correctly.");
+					}
+				}
+				else if(Z_TYPE_P(pos0) != IS_NULL)
+				{
+					zend_error(E_ERROR, "Parameter 'pos' not null, could not be retreived correctly.");
+				}
+			}
+
+			overload0_called = true;
+			already_called = true;
+		}
+	}
+
+		
+	if(overload0_called)
+	{
+		switch(arguments_received)
+		{
+			case 4:
+			{
+				#ifdef USE_WXPHP_DEBUG
+				php_printf("Executing RETURN_LONG(::wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0))\n\n");
+				#endif
+
+				ZVAL_LONG(return_value, wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0));
+
+
+				return;
+				break;
+			}
+			case 5:
+			{
+				#ifdef USE_WXPHP_DEBUG
+				php_printf("Executing RETURN_LONG(::wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0, (long) min0))\n\n");
+				#endif
+
+				ZVAL_LONG(return_value, wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0, (long) min0));
+
+
+				return;
+				break;
+			}
+			case 6:
+			{
+				#ifdef USE_WXPHP_DEBUG
+				php_printf("Executing RETURN_LONG(::wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0, (long) min0, (long) max0))\n\n");
+				#endif
+
+				ZVAL_LONG(return_value, wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0, (long) min0, (long) max0));
+
+
+				return;
+				break;
+			}
+			case 7:
+			{
+				#ifdef USE_WXPHP_DEBUG
+				php_printf("Executing RETURN_LONG(::wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0, (long) min0, (long) max0, (wxWindow*) object_pointer0_6))\n\n");
+				#endif
+
+				ZVAL_LONG(return_value, wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0, (long) min0, (long) max0, (wxWindow*) object_pointer0_6));
+
+
+				return;
+				break;
+			}
+			case 8:
+			{
+				#ifdef USE_WXPHP_DEBUG
+				php_printf("Executing RETURN_LONG(::wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0, (long) min0, (long) max0, (wxWindow*) object_pointer0_6, *(wxPoint*) object_pointer0_7))\n\n");
+				#endif
+
+				ZVAL_LONG(return_value, wxGetNumberFromUser(wxString(message0, wxConvUTF8), wxString(prompt0, wxConvUTF8), wxString(caption0, wxConvUTF8), (long) value0, (long) min0, (long) max0, (wxWindow*) object_pointer0_6, *(wxPoint*) object_pointer0_7));
+
+
+				return;
+				break;
+			}
+		}
+	}
+
+		
+	//In case wrong type/count of parameters was passed
+	if(!already_called)
+	{
+		zend_error(E_ERROR, "Wrong type or count of parameters passed to wxGetNumberFromUser()\n");
 	}
 }
 /* }}} */
