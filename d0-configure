@@ -28,6 +28,8 @@ EPREFIX=$PREFIX/usr
 	--enable-maintainer-zts \
 	--enable-pthreads \
 	--with-ssh2 \
+	--with-gpg \
+	--with-gnupg \
 	--enable-mbstring \
 	--enable-sockets \
 	--enable-ftp \
@@ -48,6 +50,6 @@ exit 0
 	
 # not working
 	--with-gpg \
-	--with-gnupg=/usr/local/include/ \
+	--with-gnupg \
 	--with-wxwidgets \
 	--with-wxwidgets-monolith \

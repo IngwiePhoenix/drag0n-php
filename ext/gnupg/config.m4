@@ -31,12 +31,12 @@ if test "$PHP_GNUPG" != "no"; then
 
   PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
   [
-    PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $GNUPG_DIR/, GNUPG_SHARED_LIBADD)
+    PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $GNUPG_DIR/lib, GNUPG_SHARED_LIBADD)
     AC_DEFINE(HAVE_GNUPGLIB,1,[ ])
   ],[
     AC_MSG_ERROR([wrong gpgme lib version or lib not found])
   ],[
-    -L$GNUPG_DIR/ -lm -ldl
+    -L$GNUPG_DIR/lib -lm -ldl -lgpgme -lassuan -lgpg-error
   ])
   PHP_SUBST(GNUPG_SHARED_LIBADD)
 
