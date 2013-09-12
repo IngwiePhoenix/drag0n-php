@@ -1,6 +1,7 @@
 #!/bin/bash
-PREFIX=/Applications/drag0n/drag0n.app/Contents/System
-EPREFIX=$PREFIX/usr
+export PREFIX=/Applications/drag0n/drag0n.app/Contents/System
+export EPREFIX=$PREFIX/usr
+export LIBS="$(gpgme-config --libs) $(libgcrypt-config --libs)"
 ./configure \
 	--prefix=$PREFIX \
 	--bindir=$PREFIX/bin \

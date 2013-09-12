@@ -36,7 +36,7 @@ if test "$PHP_GNUPG" != "no"; then
   ],[
     AC_MSG_ERROR([wrong gpgme lib version or lib not found])
   ],[
-    -L$GNUPG_DIR/lib -lm -ldl -lgpgme -lassuan -lgpg-error
+    -L$GNUPG_DIR/lib -lm -ldl
   ])
   PHP_SUBST(GNUPG_SHARED_LIBADD)
 
