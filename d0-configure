@@ -1,8 +1,10 @@
 #!/bin/bash
 export PREFIX=/Applications/drag0n/drag0n.app/Contents/System
 export EPREFIX=$PREFIX/usr
-export LIBS="$(gpgme-config --libs) $(libgcrypt-config --libs)"
+export LIBS="$(gpgme-config --libs) $(libgcrypt-config --libs) $(xml2-config --libs)"
 ./configure \
+	--enable-embed=static \
+	--enable-static=yes \
 	--prefix=$PREFIX \
 	--bindir=$PREFIX/bin \
 	--sbindir=$EPREFIX/sbin \
@@ -22,12 +24,11 @@ export LIBS="$(gpgme-config --libs) $(libgcrypt-config --libs)"
 	--dvidir=$PREFIX/doc/dvi \
 	--pdfdir=$PREFIX/doc/pdf \
 	--psdir=$PREFIX/doc/ps \
-	--enable-embed=static \
-	--enable-static=yes \
 	--with-config-file-path="" \
 	--with-config-file-scan-dir="" \
 	--enable-maintainer-zts \
 	--enable-pthreads \
+	--enable-bcompiler \
 	--with-ssh2 \
 	--with-gpg \
 	--with-gnupg \
@@ -50,7 +51,5 @@ export LIBS="$(gpgme-config --libs) $(libgcrypt-config --libs)"
 exit 0
 	
 # not working
-	--with-gpg \
-	--with-gnupg \
 	--with-wxwidgets \
-	--with-wxwidgets-monolith \
+	--with-wxwidgets-monolithic \
